@@ -1,0 +1,270 @@
+export const dynamic = "force-dynamic";
+
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import { cn, formatCurrency } from "@/lib/utils";
+import { Icon } from "@/components/ui/Icon";
+import { UnitOfMeasure } from "@prisma/client";
+
+export default async function OwnersBalancePage() {
+  const ownersData = await prisma.owner.findMany({
+    where: { isActive: true },
+    include: {
+      products: {
+        include: {
+          variants: {
+            include: {
+              saleItems: {
+                where: {
+                  sale: {
+                    status: "COMPLETED",
+                    paymentStatus: "PAID",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      balanceAdjustments: { where: { isApplied: false } },
+    },
+  });
+
+  const report = ownersData.map((owner) => {
+    let debtFromSales = 0;
+    let debtFromAdjustments = 0;
+    let itemsCount = 0;
+
+    owner.products.forEach((product) => {
+      product.variants.forEach((variant) => {
+        variant.saleItems.forEach((item) => {
+          const remainingQty = item.quantity - item.settledQuantity;
+
+          if (remainingQty > 0) {
+            let quantityFactor = remainingQty;
+            if (product.unitOfMeasure === UnitOfMeasure.GRAM) {
+              quantityFactor = remainingQty / 1000;
+            }
+            debtFromSales += Number(item.costAtSale) * quantityFactor;
+
+            if (product.unitOfMeasure === UnitOfMeasure.GRAM) {
+              itemsCount += 1;
+            } else {
+              itemsCount += remainingQty;
+            }
+          }
+        });
+      });
+    });
+
+    owner.balanceAdjustments.forEach((adjustment) => {
+      debtFromAdjustments += Number(adjustment.amount);
+    });
+
+    const totalDebt = debtFromSales + debtFromAdjustments;
+
+    return {
+      ownerId: owner.id,
+      name: owner.name,
+      phone: owner.phone,
+      totalDebt,
+      itemsCount,
+      hasAdjustments: owner.balanceAdjustments.length > 0,
+    };
+  });
+
+  const ownersWithActivity = report
+    .filter((r) => Math.abs(r.totalDebt) > 0.01)
+    .sort((a, b) => b.totalDebt - a.totalDebt);
+
+  const ownersClean = report.filter((r) => Math.abs(r.totalDebt) <= 0.01);
+  const totalGlobal = report.reduce((sum, r) => sum + r.totalDebt, 0);
+
+  return (
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 md:space-y-8 animate-in fade-in">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-foreground font-nunito tracking-tight">
+            Estado de Cuenta
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Saldos pendientes a dueños y proveedores.
+          </p>
+        </div>
+
+        <div className="bg-foreground text-background px-6 py-4 rounded-2xl shadow-xl border border-border w-full md:w-auto">
+          <p className="text-[10px] uppercase font-bold tracking-widest opacity-80 mb-1">
+            Deuda Total Local
+          </p>
+          <p className="text-3xl font-black font-nunito tracking-tight">
+            {formatCurrency(totalGlobal)}
+          </p>
+        </div>
+      </div>
+
+      <div className="md:hidden space-y-4">
+        {ownersWithActivity.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground bg-muted/20 rounded-2xl flex flex-col items-center">
+            <div className="mb-2 opacity-50">
+              <Icon name="sparkles" className="w-10 h-10" />
+            </div>
+            ¡Todo al día!
+          </div>
+        )}
+
+        {ownersWithActivity.map((row) => (
+          <div
+            key={row.ownerId}
+            className="bg-card p-5 rounded-2xl shadow-sm border border-border flex flex-col gap-4"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-bold text-lg text-foreground">
+                  {row.name}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {row.phone || "Sin teléfono"}
+                </p>
+                {row.hasAdjustments && (
+                  <span className="text-[10px] bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded border border-yellow-500/20 mt-1 font-bold flex items-center gap-1 w-fit">
+                    <Icon name="adjustment" className="w-3 h-3" />
+                    Ajustes
+                  </span>
+                )}
+              </div>
+              <div className="text-right">
+                <p
+                  className={cn(
+                    "text-xl font-black",
+                    row.totalDebt >= 0
+                      ? "text-destructive dark:text-red-400"
+                      : "text-green-600 dark:text-green-400",
+                  )}
+                >
+                  {formatCurrency(row.totalDebt)}
+                </p>
+                <span className="text-[10px] font-bold bg-secondary px-2 py-0.5 rounded text-muted-foreground">
+                  {row.itemsCount} items
+                </span>
+              </div>
+            </div>
+
+            <Link
+              href={`/owners/settlement/${row.ownerId}`}
+              className="w-full bg-primary/10 text-primary py-3 rounded-xl text-center text-sm font-bold active:scale-95 transition"
+            >
+              Ver Detalle
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden md:block bg-card rounded-3xl shadow-sm overflow-hidden border border-border">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-bold">
+              <tr>
+                <th className="p-5 pl-6">Dueño</th>
+                <th className="p-5 text-center">Items Pend.</th>
+                <th className="p-5 text-right">Saldo Neto</th>
+                <th className="p-5 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {ownersWithActivity.map((row) => (
+                <tr
+                  key={row.ownerId}
+                  className="hover:bg-muted/30 transition duration-200"
+                >
+                  <td className="p-5 pl-6">
+                    <p className="font-bold text-lg text-foreground">
+                      {row.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      {row.phone || "Sin teléfono"}
+                    </p>
+                    {row.hasAdjustments && (
+                      <span className="text-[10px] bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded border border-yellow-500/20 mt-2 font-bold flex items-center gap-1 w-fit">
+                        <Icon name="adjustment" className="w-3 h-3" />
+                        Incluye ajustes manuales
+                      </span>
+                    )}
+                  </td>
+
+                  <td className="p-5 text-center">
+                    <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-lg text-sm font-bold">
+                      {row.itemsCount} {row.itemsCount === 1 ? "item" : "items"}
+                    </span>
+                  </td>
+
+                  <td className="p-5 text-right">
+                    <span
+                      className={cn(
+                        "text-xl font-black font-mono",
+                        row.totalDebt >= 0
+                          ? "text-destructive dark:text-red-400"
+                          : "text-green-600 dark:text-green-400",
+                      )}
+                    >
+                      {formatCurrency(row.totalDebt)}
+                    </span>
+                    {row.totalDebt < 0 && (
+                      <p className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase mt-1">
+                        Saldo a favor Local
+                      </p>
+                    )}
+                  </td>
+
+                  <td className="p-5 text-center">
+                    <Link
+                      href={`/owners/settlement/${row.ownerId}`}
+                      className="bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2 rounded-xl text-sm font-bold border border-primary/10 transition shadow-sm"
+                    >
+                      Ver Detalle
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {ownersWithActivity.length === 0 && (
+          <div className="p-12 text-center text-muted-foreground bg-muted/20 flex flex-col items-center">
+            <div className="mb-2 opacity-50">
+              <Icon name="sparkles" className="w-10 h-10" />
+            </div>
+            ¡Todo al día! No hay saldos pendientes.
+          </div>
+        )}
+      </div>
+
+      {ownersClean.length > 0 && (
+        <div className="bg-card/50 p-6 rounded-3xl border border-border border-dashed">
+          <details className="group">
+            <summary className="cursor-pointer text-muted-foreground font-bold hover:text-foreground select-none flex items-center gap-2 outline-none">
+              <span>Ver dueños sin saldo pendiente ({ownersClean.length})</span>
+              <span className="transition-transform group-open:rotate-180">
+                <Icon name="chevronDown" className="w-4 h-4" />
+              </span>
+            </summary>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              {ownersClean.map((o) => (
+                <div
+                  key={o.ownerId}
+                  className="p-3 rounded-xl bg-background border border-border text-sm flex justify-between items-center opacity-70 hover:opacity-100 transition"
+                >
+                  <span className="font-medium truncate">{o.name}</span>
+                  <Icon
+                    name="check"
+                    className="w-4 h-4 text-green-500 font-bold shrink-0"
+                  />
+                </div>
+              ))}
+            </div>
+          </details>
+        </div>
+      )}
+    </div>
+  );
+}
