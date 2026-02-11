@@ -17,6 +17,8 @@ const publicApiRoutes: string[] = [];
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
   const isApiRoute = path.startsWith("/api");
   const isPublicRoute =
     publicRoutes.includes(path) ||
@@ -42,14 +44,21 @@ export async function middleware(req: NextRequest) {
     return response;
   };
 
-  if (!session) {
+  if (!session && !isDemoMode) {
     return unauthorizedResponse();
   }
 
   try {
-    const { payload } = await jwtVerify(session, SECRET_KEY, {
-      algorithms: ["HS256"],
-    });
+    let payload: any;
+
+    if (!session && isDemoMode) {
+      payload = { role: "ADMIN" };
+    } else {
+      const verified = await jwtVerify(session!, SECRET_KEY, {
+        algorithms: ["HS256"],
+      });
+      payload = verified.payload;
+    }
 
     if (!isApiRoute) {
       const role = payload.role as string | undefined;
@@ -71,6 +80,7 @@ export async function middleware(req: NextRequest) {
     }
     return NextResponse.next();
   } catch (error) {
+    if (isDemoMode) return NextResponse.next();
     return unauthorizedResponse();
   }
 }

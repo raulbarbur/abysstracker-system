@@ -34,6 +34,8 @@ export default function MainNav({
 }: MainNavProps) {
   const pathname = usePathname();
 
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
   if (pathname === "/login") return null;
 
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -287,10 +289,21 @@ export default function MainNav({
         <form action={logout}>
           <button
             type="submit"
-            className="flex items-center justify-center gap-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition text-xs font-bold w-full py-2.5 rounded-xl"
+            disabled={isDemoMode}
+            title={
+              isDemoMode
+                ? "Cerrar sesión deshabilitado en modo demo"
+                : "Cerrar sesión"
+            }
+            className={cn(
+              "flex items-center justify-center gap-2 transition text-xs font-bold w-full py-2.5 rounded-xl",
+              isDemoMode
+                ? "text-muted-foreground/40 bg-muted/20 cursor-not-allowed opacity-70"
+                : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
+            )}
           >
             <Icon name="logout" className="h-4 w-4" />
-            <span>Cerrar Sesión</span>
+            <span>{isDemoMode ? "Sesión de Invitado" : "Cerrar Sesión"}</span>
           </button>
         </form>
 
@@ -330,7 +343,12 @@ export default function MainNav({
         <SidebarContent />
       </aside>
 
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-card/80 backdrop-blur-md border-b border-border z-30 flex items-center justify-between px-4">
+      <header
+        className={cn(
+          "md:hidden fixed left-0 right-0 h-16 bg-card/80 backdrop-blur-md border-b border-border z-30 flex items-center justify-between px-4 transition-all duration-300",
+          isDemoMode ? "top-[33px]" : "top-0",
+        )}
+      >
         <button
           onClick={() => setMobileMenuOpen(true)}
           className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-lg transition-colors"
@@ -350,6 +368,7 @@ export default function MainNav({
         className={cn(
           "md:hidden fixed inset-0 z-50 transition-all duration-300",
           mobileMenuOpen ? "pointer-events-auto" : "pointer-events-none",
+          isDemoMode && "top-[33px]",
         )}
       >
         <div
