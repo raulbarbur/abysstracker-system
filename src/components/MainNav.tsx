@@ -28,6 +28,21 @@ type RouteGroup = {
 
 const STAFF_ALLOWED_PREFIXES = ["/pos", "/agenda", "/pets"];
 
+// Diccionario de traducción para la barra móvil
+const routeLabels: Record<string, string> = {
+  dashboard: "Inicio",
+  pos: "Caja",
+  agenda: "Agenda",
+  sales: "Ventas",
+  products: "Productos",
+  categories: "Categorías",
+  customers: "Clientes",
+  pets: "Mascotas",
+  owners: "Dueños",
+  admin: "Administración",
+  settlements: "Liquidaciones",
+};
+
 export default function MainNav({
   role = "STAFF",
   userName = "Usuario",
@@ -35,6 +50,10 @@ export default function MainNav({
   const pathname = usePathname();
 
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
+  const segment = pathname.split("/")[1];
+  const displayTitle =
+    routeLabels[segment] || (pathname === "/" ? "Inicio" : segment);
 
   if (pathname === "/login") return null;
 
@@ -171,7 +190,7 @@ export default function MainNav({
             ABYSSTRACKER
           </h1>
           <p className="text-[10px] font-bold text-muted-foreground mt-0.5 uppercase tracking-widest truncate">
-            Sistema Profesional v3
+            v3.0.0
           </p>
         </div>
 
@@ -357,8 +376,8 @@ export default function MainNav({
           <Icon name="menu" className="h-6 w-6" />
         </button>
 
-        <div className="text-lg font-black text-foreground font-nunito tracking-tight capitalize">
-          {pathname === "/" ? "Inicio" : pathname.split("/")[1]}
+        <div className="text-sm font-black text-foreground font-nunito tracking-tight uppercase italic">
+          {displayTitle}
         </div>
 
         <div className="w-8"></div>
