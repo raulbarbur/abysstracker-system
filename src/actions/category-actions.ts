@@ -4,7 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = "Modo Demo: Las acciones de escritura están deshabilitadas.";
+
 export async function createCategory(formData: FormData) {
+  if (isDemoMode) return { success: false, error: demoError };
+
   const session = await getSession();
 
   if (!session) {
@@ -40,6 +45,8 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(id: string, newName: string) {
+  if (isDemoMode) return { success: false, error: demoError };
+
   const session = await getSession();
   if (!session) return { success: false, error: "No autorizado" };
 
@@ -66,6 +73,8 @@ export async function updateCategory(id: string, newName: string) {
 }
 
 export async function deleteCategory(id: string) {
+  if (isDemoMode) return { success: false, error: demoError };
+
   const session = await getSession();
   if (!session) return { success: false, error: "No autorizado" };
 

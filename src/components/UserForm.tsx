@@ -25,15 +25,19 @@ export default function UserForm() {
     const formData = new FormData(formRef.current);
     const result = await createUser(formData);
 
-    if (result?.error) {
-      addToast(result.error, "error");
-    } else {
-      addToast("Usuario creado correctamente", "success");
-      formRef.current?.reset();
-      setPass("");
-      setConfirmPass("");
-      router.refresh();
+    if (result) {
+      if ("error" in result) {
+        addToast(result.error, "error");
+      } else {
+        addToast("Usuario creado correctamente", "success");
+        formRef.current?.reset();
+        setPass("");
+        setConfirmPass("");
+        router.refresh();
+      }
     }
+    
+    setShowConfirm(false);
   };
 
   const passwordsMatch = pass === confirmPass;

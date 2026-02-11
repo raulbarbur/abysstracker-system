@@ -39,7 +39,7 @@ export default function ProductActions({
   const handleConfirm = async () => {
     const res = await toggleProductStatus(id, isActive);
 
-    if (res.error) {
+    if (res && "error" in res) {
       addToast(res.error, "error");
       throw new Error(res.error);
     } else {

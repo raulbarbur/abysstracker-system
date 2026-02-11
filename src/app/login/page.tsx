@@ -39,7 +39,7 @@ export default function LoginPage() {
     setLoading(true);
     setMessage(null);
     const res = await login(formData);
-    if (res?.error) {
+    if (res && "error" in res) {
       setMessage({ text: res.error, type: "error" });
       setLoading(false);
     }
@@ -51,10 +51,12 @@ export default function LoginPage() {
     const res = await requestPasswordReset(formData);
 
     setLoading(false);
-    if (res?.error) {
-      setMessage({ text: res.error, type: "error" });
-    } else if (res?.success) {
-      setMessage({ text: res.message || "Correo enviado", type: "success" });
+    if (res) {
+      if ("error" in res) {
+        setMessage({ text: res.error, type: "error" });
+      } else if ("success" in res) {
+        setMessage({ text: res.message || "Correo enviado", type: "success" });
+      }
     }
   };
 
@@ -68,17 +70,19 @@ export default function LoginPage() {
     const res = await resetPassword(formData);
 
     setLoading(false);
-    if (res?.error) {
-      setMessage({ text: res.error, type: "error" });
-    } else {
-      setMessage({
-        text: "Contraseña actualizada. Inicia sesión.",
-        type: "success",
-      });
-      setTimeout(() => {
-        setView("LOGIN");
-        router.replace("/login");
-      }, 2000);
+    if (res) {
+      if ("error" in res) {
+        setMessage({ text: res.error, type: "error" });
+      } else if ("success" in res) {
+        setMessage({
+          text: "Contraseña actualizada. Inicia sesión.",
+          type: "success",
+        });
+        setTimeout(() => {
+          setView("LOGIN");
+          router.replace("/login");
+        }, 2000);
+      }
     }
   };
 
@@ -160,15 +164,6 @@ export default function LoginPage() {
                   />
                 </button>
               </div>
-
-              {/* --- ELIMINAR BLOQUE PARA IMPLEMENTAR RECUPERACION DE CONTRASEÑA --- */}
-              {/*
-                    <div className="text-right">
-                        <button type="button" onClick={() => { setMessage(null); setView('FORGOT_PASSWORD') }} className="text-xs font-bold text-primary hover:underline">
-                            ¿Olvidaste tu contraseña?
-                        </button>
-                    </div>
-                    */}
             </div>
 
             <button
@@ -269,7 +264,7 @@ export default function LoginPage() {
 
         <div className="mt-8 pt-6 border-t border-border text-center">
           <p className="text-[10px] text-muted-foreground font-medium">
-            v3.0 • Secure Access
+            v3.0.0
           </p>
         </div>
       </div>

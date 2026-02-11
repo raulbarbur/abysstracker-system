@@ -30,7 +30,7 @@ export default function DeleteUserButton({ userId, userName, currentUserId }: Pr
     try {
       const res = await deleteUser(userId)
       
-      if (res?.error) {
+      if (res && "error" in res) {
         addToast(res.error, "error")
       } else {
         addToast(`Usuario ${userName} eliminado correctamente.`, "success")

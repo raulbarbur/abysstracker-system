@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
-import { Icon } from "@/components/ui/Icon";
 import { changePassword } from "@/actions/user-actions";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { cn } from "@/lib/utils";
@@ -32,11 +31,12 @@ export default function ChangePasswordModal({
     if (!canSubmit) return;
 
     const result = await changePassword(user.id, password);
-    if (result.success) {
+
+    if ("error" in result) {
+      addToast(result.error || "Error desconocido", "error");
+    } else {
       addToast(`Contraseña de ${user.name} actualizada.`, "success");
       handleClose();
-    } else {
-      addToast(result.error || "Error desconocido", "error");
     }
   };
 

@@ -54,7 +54,7 @@ export default function PrintButton() {
       });
 
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save(`reporte-guapecanes-${new Date().getTime()}.pdf`);
+      pdf.save(`reporte-abysstracker-${new Date().getTime()}.pdf`);
     } catch (error) {
       console.error("Error capturando PDF:", error);
       alert("Hubo un error al generar el PDF. Por favor, intente de nuevo.");

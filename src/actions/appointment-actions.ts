@@ -5,6 +5,11 @@ import { revalidatePath } from "next/cache";
 import { buildArgentinaDate } from "@/lib/utils";
 import { getSession } from "@/lib/auth";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 type ApptStatus =
   | "PENDING"
   | "CONFIRMED"
@@ -13,6 +18,8 @@ type ApptStatus =
   | "CANCELLED";
 
 export async function createAppointment(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "No autorizado" };
 
@@ -71,6 +78,8 @@ export async function createAppointment(formData: FormData) {
 }
 
 export async function cancelAppointment(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "No autorizado" };
   const id = formData.get("id") as string;
@@ -100,6 +109,8 @@ export async function updateAppointmentStatus(
   id: string,
   newStatus: ApptStatus,
 ) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "No autorizado" };
 

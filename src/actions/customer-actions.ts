@@ -4,7 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 export async function createCustomer(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const name = formData.get("name") as string;
   const phone = formData.get("phone") as string;
   const email = formData.get("email") as string;
@@ -34,6 +41,8 @@ export async function createCustomer(formData: FormData) {
 }
 
 export async function updateCustomer(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
   const phone = formData.get("phone") as string;
@@ -64,6 +73,8 @@ export async function updateCustomer(formData: FormData) {
 }
 
 export async function deleteCustomer(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const id = formData.get("id") as string;
   const shouldRestore = formData.get("restore") === "true";
 
@@ -110,6 +121,8 @@ export async function deleteCustomer(formData: FormData) {
 }
 
 export async function markSaleAsPaid(saleId: string) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "No autorizado" };
 

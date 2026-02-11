@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import { Icon } from "@/components/ui/Icon";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { cn } from "@/lib/utils";
 
 interface Props {
   id: string;
@@ -22,7 +23,6 @@ export function DeleteCustomerButton({ id, name, saleCount, isActive }: Props) {
 
   const isArchiving = isActive && saleCount > 0;
   const isRestoring = !isActive;
-  const isDeleting = isActive && saleCount === 0;
 
   const handleAction = async () => {
     setLoading(true);
@@ -36,7 +36,7 @@ export function DeleteCustomerButton({ id, name, saleCount, isActive }: Props) {
 
       const result = await deleteCustomer(formData);
 
-      if (result.error) {
+      if (result && "error" in result) {
         addToast(result.error, "error");
       } else {
         const message = isRestoring
@@ -125,8 +125,4 @@ export function DeleteCustomerButton({ id, name, saleCount, isActive }: Props) {
       />
     </>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(" ");
 }

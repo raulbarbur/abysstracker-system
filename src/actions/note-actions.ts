@@ -3,7 +3,14 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 export async function createNote(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const petId = formData.get("petId") as string;
   const content = formData.get("content") as string;
 
@@ -26,6 +33,8 @@ export async function createNote(formData: FormData) {
 }
 
 export async function deleteNote(formData: FormData) {
+  if (isDemoMode) return;
+
   const id = formData.get("id") as string;
   const petId = formData.get("petId") as string;
 

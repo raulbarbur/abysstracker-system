@@ -5,6 +5,12 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { UnitOfMeasure } from "@prisma/client";
 
+// --- MEJORA: DEMO GUARD ---
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 type SettlementItemInput = {
   id: string;
   type: "SALE" | "ADJUSTMENT";
@@ -14,6 +20,8 @@ type SettlementItemInput = {
 const round = (num: number) => Math.round(num * 100) / 100;
 
 export async function createSettlement(formData: FormData) {
+  if (isDemoMode) return demoError; // Interceptación Demo
+
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
     return { error: "Requiere permisos de Administrador para liquidar." };

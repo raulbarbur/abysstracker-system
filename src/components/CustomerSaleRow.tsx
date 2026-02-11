@@ -6,6 +6,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { Icon } from "@/components/ui/Icon";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import TicketView from "@/components/TicketView";
+import { useToast } from "@/components/ui/Toast";
 
 type SaleType = {
   id: string;
@@ -26,6 +27,7 @@ export default function CustomerSaleRow({ sale }: { sale: SaleType }) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [showTicket, setShowTicket] = useState(false);
   const [ticketData, setTicketData] = useState<any>(null);
+  const { addToast } = useToast();
 
   const isPending = sale.paymentStatus === "PENDING";
 
@@ -49,12 +51,19 @@ export default function CustomerSaleRow({ sale }: { sale: SaleType }) {
     setLoading(true);
     try {
       const result = await markSaleAsPaid(sale.id);
-      if (result.success && result.saleData) {
-        setTicketData(result.saleData);
-        setShowTicket(true);
+
+      if (result) {
+        if ("success" in result && result.saleData) {
+          setTicketData(result.saleData);
+          setShowTicket(true);
+          addToast("Pago registrado con éxito", "success");
+        } else if ("error" in result) {
+          addToast(result.error, "error");
+        }
       }
     } catch (error) {
       console.error("Error al cobrar:", error);
+      addToast("Error inesperado al procesar el pago", "error");
     } finally {
       setLoading(false);
       setIsConfirmOpen(false);

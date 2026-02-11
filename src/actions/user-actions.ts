@@ -5,7 +5,14 @@ import { revalidatePath } from "next/cache";
 import { Role, Prisma } from "@prisma/client";
 import { hashPassword, getSession } from "@/lib/auth";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 export async function createUser(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "No autorizado." };
   if (session.role !== "ADMIN")
@@ -72,6 +79,8 @@ export async function getUsers() {
 }
 
 export async function deleteUser(userIdToDelete: string) {
+  if (isDemoMode) return demoError;
+
   try {
     const session = await getSession();
 
@@ -110,6 +119,8 @@ export async function deleteUser(userIdToDelete: string) {
 }
 
 export async function changePassword(userId: string, newPassword: string) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "No autorizado." };
 

@@ -11,6 +11,11 @@ import { redirect } from "next/navigation";
 import { Resend } from "resend";
 import crypto from "crypto";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -47,6 +52,8 @@ export async function logout() {
 }
 
 export async function requestPasswordReset(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const email = formData.get("email") as string;
 
   if (!email) return { error: "Ingresa tu email." };
@@ -111,6 +118,8 @@ export async function requestPasswordReset(formData: FormData) {
 }
 
 export async function resetPassword(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const token = formData.get("token") as string;
   const password = formData.get("password") as string;
 

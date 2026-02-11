@@ -30,26 +30,34 @@ export default function OwnerForm({
     if (!formRef.current) return;
     const formData = new FormData(formRef.current);
 
-    let result;
+    try {
+      if (initialData?.id) {
+        formData.append("id", initialData.id);
+        const result = await updateOwner(formData);
 
-    if (initialData?.id) {
-      formData.append("id", initialData.id);
-      result = await updateOwner(formData);
-      if (result.success) {
-        addToast("Dueño actualizado", "success");
-        router.push("/owners");
-        router.refresh();
+        if (result && "success" in result) {
+          addToast("Dueño actualizado", "success");
+          router.push("/owners");
+          router.refresh();
+        } else if (result && "error" in result) {
+          throw new Error(result.error);
+        }
+      } else {
+        const result = await createOwner(formData);
+
+        if (result && "success" in result) {
+          addToast("Dueño creado", "success");
+          formRef.current.reset();
+          router.refresh();
+        } else if (result && "error" in result) {
+          throw new Error(result.error);
+        }
       }
-    } else {
-      result = await createOwner(formData);
-      if (result?.success) {
-        addToast("Dueño creado", "success");
-        formRef.current.reset();
-        router.refresh();
-      }
+    } catch (error: any) {
+      addToast(error.message || "Error al procesar la solicitud", "error");
+    } finally {
+      setShowConfirm(false);
     }
-
-    if (result?.error) throw new Error(result.error);
   };
 
   const inputClass =

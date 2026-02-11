@@ -6,6 +6,11 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { UnitOfMeasure } from "@prisma/client";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 type VariantInput = {
   id?: string;
   name: string;
@@ -50,9 +55,9 @@ function validateVariants(variants: VariantInput[]): string | null {
   return null;
 }
 
-// --- ACTIONS ---
-
 export async function createProduct(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "Sesión expirada." };
 
@@ -112,6 +117,8 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "No autorizado." };
 
@@ -187,6 +194,8 @@ export async function toggleProductStatus(
   productId: string,
   currentStatus: boolean,
 ) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "No autorizado." };
   try {

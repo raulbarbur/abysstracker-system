@@ -10,6 +10,9 @@ import {
 import { getSession } from "@/lib/auth";
 import { CartItem, PaymentMethod } from "@/types/sale";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = { error: "Modo Demo: Las acciones de escritura están deshabilitadas." };
+
 const round = (num: number) => Math.round(num * 100) / 100;
 
 export async function processSale(
@@ -18,6 +21,8 @@ export async function processSale(
   paymentMethod: PaymentMethod,
   customerId?: string,
 ) {
+  if (isDemoMode) return demoError; 
+
   const session = await getSession();
   if (!session) return { error: "Sesión expirada. Iniciá sesión nuevamente." };
   if (cart.length === 0) return { error: "El carrito está vacío" };
@@ -206,6 +211,8 @@ export async function processSale(
 }
 
 export async function markSaleAsPaid(saleId: string) {
+  if (isDemoMode) return demoError; 
+
   const session = await getSession();
   if (!session) return { error: "No autorizado" };
 
@@ -238,6 +245,8 @@ export async function markSaleAsPaid(saleId: string) {
 }
 
 export async function cancelSale(saleId: string) {
+  if (isDemoMode) return demoError; 
+
   const session = await getSession();
   if (!session) return { error: "No autorizado" };
 

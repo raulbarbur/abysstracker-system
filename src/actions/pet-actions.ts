@@ -5,7 +5,13 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 export async function createPet(formData: FormData) {
+  if (isDemoMode) return demoError;
   const session = await getSession();
   if (!session) return { error: "No autorizado" };
 
@@ -39,6 +45,11 @@ export async function createPet(formData: FormData) {
 }
 
 export async function deletePet(id: string) {
+  if (isDemoMode)
+    throw new Error(
+      "Modo Demo: Las acciones de escritura están deshabilitadas.",
+    );
+
   const session = await getSession();
   if (!session) {
     throw new Error("No autorizado");

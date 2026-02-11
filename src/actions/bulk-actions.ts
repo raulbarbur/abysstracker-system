@@ -5,6 +5,12 @@ import { getSession } from "@/lib/auth";
 import { StockMovementType, UnitOfMeasure } from "@prisma/client";
 import ExcelJS from "exceljs";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  success: false,
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 type ImportRow = {
   name: string;
   variantName?: string;
@@ -43,6 +49,8 @@ function normalizeUnit(input?: string): UnitOfMeasure {
 }
 
 export async function importProductBatch(rows: ImportRow[]) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
     return { success: false, error: "Requiere permisos de Administrador." };

@@ -9,7 +9,14 @@ import {
 import { StockMovementType, UnitOfMeasure } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoError = {
+  error: "Modo Demo: Las acciones de escritura están deshabilitadas.",
+};
+
 export async function registerStockMovement(formData: FormData) {
+  if (isDemoMode) return demoError;
+
   const session = await getSession();
   if (!session) return { error: "Sesión no válida" };
   const variantId = formData.get("variantId") as string;

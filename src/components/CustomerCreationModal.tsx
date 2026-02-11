@@ -25,12 +25,16 @@ export function CustomerCreationModal({
     const result = await createCustomer(formData);
     setCreatingCustomer(false);
 
-    if (result?.success && result.customer) {
-      addToast("Cliente creado y seleccionado", "success");
-      onCustomerCreated(result.customer.id);
-      onClose();
+    if (result) {
+      if ("success" in result && result.customer) {
+        addToast("Cliente creado y seleccionado", "success");
+        onCustomerCreated(result.customer.id);
+        onClose();
+      } else if ("error" in result) {
+        addToast(result.error || "Error al crear cliente", "error");
+      }
     } else {
-      addToast(result?.error || "Error al crear cliente", "error");
+      addToast("Error inesperado al procesar la solicitud", "error");
     }
   };
 
