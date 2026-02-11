@@ -12,6 +12,9 @@
     "docs:gen": "ts-node -P tsconfig.tools.json tools/generate-all-indices.ts",
     "test": "vitest"
   },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seeds/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^5.16.0",
     "@tanstack/react-virtual": "^3.13.18",
