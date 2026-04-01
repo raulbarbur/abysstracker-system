@@ -230,7 +230,7 @@ export async function seedFinancials(prisma: PrismaClient) {
       data: {
         id: "adj-ovn-003-pend",
         ownerId: "own-void-nutrition",
-        amount: 25.0,
+        amount: 25000.0,
         description:
           "Ajuste manual por discrepancia en informe - Pendiente de resolucion.",
         isApplied: false,
